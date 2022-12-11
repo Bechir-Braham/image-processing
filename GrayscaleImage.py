@@ -1,5 +1,4 @@
-import numpy as np
-class ImagePGM:
+class GrayscaleImage:
     def __init__(self):
         self.format = ''
         self.lines = 0
@@ -24,7 +23,7 @@ class ImagePGM:
         self.lines = arr.shape[0]
         self.cols = arr.shape[1]
         self.pixels = 255
-        self.data = arr.tolist()
+        self.data = arr
 
     def read_pgm(self, f):
         self.comment = f.readline()[:-1]
@@ -87,7 +86,7 @@ class ImagePGM:
         cumul = self.cumul_histogram()
         cumul_std = (i / (self.cols * self.lines) for i in cumul)
         cumul_eg = (i * self.pixels for i in cumul_std)
-        ret= [int(i) for i in cumul_eg]
+        ret = [int(i) for i in cumul_eg]
         return ret
 
     def apply_map(self, map):
@@ -98,21 +97,20 @@ class ImagePGM:
 
     def piecewise_linear(self, point1, point2):
         map = []
-        for i in range(point1[0] + 1):
+        for i in range(point1[0] ):
             rate = point1[1] / point1[0]
             map.append(int(rate * i))
 
-        for i in range(point1[0] + 1, point2[0] + 1):
+        for i in range(point1[0] , point2[0] + 1):
             rate = (point2[1] - point1[1]) / (point2[0] - point1[0])
             offset = point2[1] - rate * point2[0]
             map.append(int(rate * i + offset))
         point3 = (255, 255)
 
-        for i in range(point2[0] + 1, point3[0] + 1):
+        for i in range(point2[0] , point3[0] + 1):
             rate = (point3[1] - point2[1]) / (point3[0] - point2[0])
             offset = point3[1] - rate * point3[0]
             map.append(int(rate * i + offset))
-
         return map
 
     def equalized_cumulative(self):
@@ -122,36 +120,3 @@ class ImagePGM:
         for i in eq:
             map[i] += cumul[i]
         return map
-
-# def main():
-#     img = Image()
-#     img.read('./chat.pgm')
-#     img.write('saroura.pgm')
-#
-#     print('mean', img.moment(1))
-#     print()
-#     print('std', img.std())
-#     print()
-#     print('histogram', img.histogram())
-#     print()
-#     print('cumulative histogram', img.cumul_histogram())
-#     print()
-#     print('equalized map', img.equalization_array())
-#
-#     img.apply_map(img.equalization_array())
-#     print()
-#     print('equalized cumulative histogram',img.equalized_cumulative())
-#     img.write('equalized.pgm')
-#
-#     img.read('./chat.pgm')
-#     img.apply_map(img.piecewise_linear((100, 50), (150, 200)))
-#     img.write('./piecewise.pgm')
-#
-#
-#
-#
-#     # d=np.array(img.data)  # print(d.mean())  # print(d.std())
-#
-#
-# if __name__ == '__main__':
-#     main()
