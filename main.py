@@ -47,8 +47,17 @@ def SG_process_image(input_img, thresh_r, thresh_g, thresh_b, and_chk, or_chk):
         thresh_r, thresh_g, thresh_b = [max(thresh_r, thresh_g, thresh_b)] * 3
     if or_chk:
         thresh_r, thresh_g, thresh_b = [min(thresh_r, thresh_g, thresh_b)] * 3
-    img = ColoredImage().read_from_array(input_img).apply_threshold(thresh_r, thresh_g, thresh_b)
-    return input_img, img.data
+    img = ColoredImage().read_from_array(input_img)
+    histograms = img.get_three_histograms()
+    img.apply_threshold(thresh_r, thresh_g, thresh_b)
+    ret = [input_img, img.data]
+    thresholds = [thresh_r, thresh_g, thresh_b]
+    for i, hist in enumerate(histograms):
+        fig = go.Figure(data=go.Scatter(x=list(range(256)), y=hist))
+        fig.add_vline(x=thresholds[i])
+        ret.append(fig)
+
+    return tuple(ret)
 
 
 SG_imageUploaded = False
@@ -68,8 +77,15 @@ def SG_change(*args):
 
 def SG2_process_image(input_img):
     img = ColoredImage().read_from_array(input_img)
+    histograms = img.get_three_histograms()
     vals = img.apply_Otsu_segmentation()
-    return input_img, img.data, *vals
+    ret = [input_img, img.data, *vals]
+    for i, hist in enumerate(histograms):
+        fig = go.Figure(data=go.Scatter(x=list(range(256)), y=hist))
+        fig.add_vline(x=vals[i])
+        ret.append(fig)
+
+    return tuple(ret)
 
 
 def FL_add_noise(input_img):
@@ -200,15 +216,19 @@ with gr.Blocks() as demo:
             with gr.Row():
                 SG_output1 = gr.Image(label="input image").style(height=HEIGHT)
                 SG_output2 = gr.Image(label="Segmented image").style(height=HEIGHT)
+            with gr.Row():
+                SG_plot1 = gr.Plot()
+                SG_plot2 = gr.Plot()
+                SG_plot3 = gr.Plot()
 
             SG_greet_btn.click(fn=SG_submit,
                                inputs=[SG_input_img, SG_thresh_r, SG_thresh_g, SG_thresh_b, SG_and_chk, SG_or_chk],
-                               outputs=[SG_output1, SG_output2])
+                               outputs=[SG_output1, SG_output2, SG_plot1, SG_plot2, SG_plot3])
             sliders = (SG_thresh_r, SG_thresh_b, SG_thresh_g)
             for slider in sliders:
-                slider.change(fn=SG_process_image,
+                slider.change(fn=SG_change,
                               inputs=[SG_input_img, SG_thresh_r, SG_thresh_g, SG_thresh_b, SG_and_chk, SG_or_chk],
-                              outputs=[SG_output1, SG_output2])
+                              outputs=[SG_output1, SG_output2, SG_plot1, SG_plot2, SG_plot3])
         with gr.Tab("Otsu Segmentation"):
             SG2_input_img = gr.Image(label="input_img")
             SG2_button = gr.Button("Submit")
@@ -221,10 +241,13 @@ with gr.Blocks() as demo:
                     SG2_val_r = gr.Textbox(label="red threshold")
                     SG2_val_g = gr.Textbox(label="green threshold")
                     SG2_val_b = gr.Textbox(label="blue threshold")
-                SG2_button.click(fn=SG2_process_image, inputs=SG2_input_img,
-                                 outputs=[SG2_output1, SG2_output2, SG2_val_r, SG2_val_g, SG2_val_b])
-
-# demo = gr.Interface(process_image, "image", ["image","image"])
+            with gr.Row():
+                SG2_plot1 = gr.Plot()
+                SG2_plot2 = gr.Plot()
+                SG2_plot3 = gr.Plot()
+            SG2_button.click(fn=SG2_process_image, inputs=SG2_input_img,
+                             outputs=[SG2_output1, SG2_output2, SG2_val_r, SG2_val_g, SG2_val_b,
+                                      SG2_plot1, SG2_plot2, SG2_plot3])
 
 if __name__ == "__main__":
     demo.launch()

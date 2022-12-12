@@ -176,3 +176,9 @@ class ColoredImage:
         self.apply_filter_grayscale(matrix, self.g)
         self.apply_filter_grayscale(matrix, self.b)
         return self
+
+    def get_three_histograms(self):
+        r = self.get_histogram(self.r)
+        g = self.get_histogram(self.g)
+        b = self.get_histogram(self.b)
+        return r, g, b
